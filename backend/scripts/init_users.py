@@ -68,9 +68,6 @@ def init_users():
             existing_faculty.password_hash = "$2b$12$R9h/lS76iitpGuZ.idmS0O6v0N2q7Kx03I9O0QkP6tH6S.iW8Y.oS"
         
         db.commit()
-            db.add(faculty)
-            db.commit()
-            print("✅ Faculty user created successfully!")
 
     except Exception as e:
         print(f"❌ Error initializing users: {e}")

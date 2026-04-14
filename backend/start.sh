@@ -2,10 +2,8 @@
 # Exit on error
 set -o errexit
 
-# Install dependencies if needed (already handled by buildCommand, but safe here)
-pip install -r backend/requirements.txt
-
 # Run migrations
+# Note: alembic.ini is in backend/
 cd backend
 alembic upgrade head
 

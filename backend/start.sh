@@ -2,12 +2,14 @@
 # Exit on error
 set -o errexit
 
+echo "🚀 Starting Database Initialization..."
+
 # Run migrations
-# Note: alembic.ini is in backend/
 cd backend
+echo "Running migrations..."
 alembic upgrade head
+
+echo "Seeding initial users..."
 python scripts/init_users.py
 
-# Note: The actual process management (Celery & Gunicorn) 
-# is handled by the render.yaml startCommand to ensure 
-# Render correctly monitors the main process.
+echo "✅ Database Initialization Complete!"

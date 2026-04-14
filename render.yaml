@@ -3,9 +3,9 @@ services:
   - type: web
     name: campusiq-backend-unified
     env: python
-    buildCommand: "./backend/start.sh"
-    # Merged start command: starts API in foreground, background tasks in background process
-    startCommand: "cd backend && (celery -A app.workers.worker worker --loglevel=info --concurrency=1 &) && gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+    buildCommand: "pip install -r backend/requirements.txt --no-cache-dir"
+    # Unified start command: runs migrations/seeding, then starts API + Worker
+    startCommand: "bash ./backend/start.sh && cd backend && (celery -A app.workers.worker worker --loglevel=info --concurrency=1 &) && gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
     envVars:
       - key: APP_ENV
         value: production

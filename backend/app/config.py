@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import List
 import json
+import os
 
 
 class Settings(BaseSettings):
@@ -44,6 +45,14 @@ class Settings(BaseSettings):
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+
+    def __init__(self, **values):
+        super().__init__(**values)
+        # If REDIS_URL is provided in environment, use it for Celery as well
+        if "REDIS_URL" in os.environ or values.get("REDIS_URL"):
+            url = values.get("REDIS_URL") or os.environ.get("REDIS_URL")
+            self.CELERY_BROKER_URL = url
+            self.CELERY_RESULT_BACKEND = url
 
     # SMTP (for Bug Reports)
     SMTP_HOST: str = "smtp.gmail.com"

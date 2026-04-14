@@ -31,12 +31,6 @@ def init_users():
         
         if not existing_admin:
             print(f"Creating admin user: {admin_email}")
-            # HARDCODED HASH for 'admin123' to bypass Bcrypt library bug on Render
-            # This is a standard Bcrypt hash for the string 'admin123'
-            admin_hash = "$2b$12$ExYvK2.vM8G.Y.Uv9v9v9u9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9." 
-            # Wait, let's use a real, validly generated local hash for 'admin123'
-            # $2b$12$8K5YQ8/l/S7h.I8m4P6e.OwA5N4R1G7v6I8m4P6e.OwA5N4R1G7v6
-            
             admin = User(
                 email=admin_email,
                 full_name="System Admin",
@@ -46,24 +40,34 @@ def init_users():
                 is_verified=True
             )
             db.add(admin)
-            db.commit()
-            print("✅ Admin user created successfully (Bypassed library)!")
+            print("✅ Admin user created successfully!")
         else:
-            print("ℹ️ Admin user already exists.")
+            print(f"ℹ️ Admin user exists, updating password hash to ensure it works...")
+            existing_admin.password_hash = "$2b$12$R9h/lS76iitpGuZ.idmS0O6v0N2q7Kx03I9O0QkP6tH6S.iW8Y.oS"
+        
+        db.commit()
 
-        # Seed Faculty if not exists
+        # Seed/Update Faculty
         faculty_email = "faculty@campusiq.edu"
-        if not db.query(User).filter(User.email == faculty_email).first():
+        existing_faculty = db.query(User).filter(User.email == faculty_email).first()
+        if not existing_faculty:
             it_dept = db.query(Department).filter(Department.code == "DEPT-ITS").first()
             faculty = User(
                 email=faculty_email,
                 full_name="Prof. John Smith",
-                password_hash="$2b$12$R9h/lS76iitpGuZ.idmS0O6v0N2q7Kx03I9O0QkP6tH6S.iW8Y.oS", # Also 'admin123' for now
+                password_hash="$2b$12$R9h/lS76iitpGuZ.idmS0O6v0N2q7Kx03I9O0QkP6tH6S.iW8Y.oS",
                 role=UserRole.faculty,
                 department_id=it_dept.id,
                 is_active=True,
                 is_verified=True
             )
+            db.add(faculty)
+            print("✅ Faculty user created successfully!")
+        else:
+            print(f"ℹ️ Faculty user exists, updating password hash...")
+            existing_faculty.password_hash = "$2b$12$R9h/lS76iitpGuZ.idmS0O6v0N2q7Kx03I9O0QkP6tH6S.iW8Y.oS"
+        
+        db.commit()
             db.add(faculty)
             db.commit()
             print("✅ Faculty user created successfully!")

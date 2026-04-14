@@ -6,6 +6,7 @@ set -o errexit
 # Note: alembic.ini is in backend/
 cd backend
 alembic upgrade head
+python scripts/init_users.py
 
 # Note: The actual process management (Celery & Gunicorn) 
 # is handled by the render.yaml startCommand to ensure 

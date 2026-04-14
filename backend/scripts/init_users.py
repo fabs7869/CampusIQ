@@ -31,10 +31,14 @@ def init_users():
         
         if not existing_admin:
             print(f"Creating admin user: {admin_email}")
+            # Ensure password is a short string to avoid Bcrypt 72-byte limit issues
+            raw_pass = "admin123"
+            print(f"DEBUG: Password length is {len(raw_pass)}")
+            
             admin = User(
                 email=admin_email,
                 full_name="System Admin",
-                password_hash=hash_password("admin123"),
+                password_hash=hash_password(str(raw_pass)[:72]),
                 role=UserRole.admin,
                 is_active=True,
                 is_verified=True
@@ -49,10 +53,11 @@ def init_users():
         faculty_email = "faculty@campusiq.edu"
         if not db.query(User).filter(User.email == faculty_email).first():
             it_dept = db.query(Department).filter(Department.code == "DEPT-ITS").first()
+            raw_faculty_pass = "faculty123"
             faculty = User(
                 email=faculty_email,
                 full_name="Prof. John Smith",
-                password_hash=hash_password("faculty123"),
+                password_hash=hash_password(str(raw_faculty_pass)[:72]),
                 role=UserRole.faculty,
                 department_id=it_dept.id,
                 is_active=True,

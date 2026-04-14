@@ -1,0 +1,233 @@
+CampusIQ/
+├── .env.example
+├── docker-compose.yml
+├── README.md
+│
+├── backend/
+│   ├── Dockerfile
+│   ├── alembic.ini
+│   ├── main.py
+│   ├── requirements.txt
+│   │
+│   ├── alembic/
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions/            ← (auto-generated migrations go here)
+│   │
+│   └── app/
+│       ├── __init__.py
+│       ├── config.py
+│       ├── database.py
+│       │
+│       ├── auth/
+│       │   ├── __init__.py
+│       │   └── jwt.py           ← JWT tokens, bcrypt, RBAC
+│       │
+│       ├── models/
+│       │   ├── __init__.py
+│       │   ├── user.py          ← User, UserRole enum
+│       │   ├── complaint.py     ← Complaint, ComplaintUpvote, enums
+│       │   ├── department.py    ← Department
+│       │   └── notification.py  ← Notification, Suggestion
+│       │
+│       ├── schemas/
+│       │   ├── __init__.py
+│       │   ├── user.py          ← UserCreate, UserLogin, TokenResponse
+│       │   ├── complaint.py     ← ComplaintCreate, ComplaintResponse, FeedItem
+│       │   └── analytics.py     ← AnalyticsSummary, HeatmapPoint
+│       │
+│       ├── api/
+│       │   ├── __init__.py
+│       │   └── routes/
+│       │       ├── __init__.py
+│       │       ├── auth.py         ← POST /auth/register, /login, /refresh
+│       │       ├── users.py        ← GET/PATCH /users/me, admin user mgmt
+│       │       ├── complaints.py   ← CRUD + verify + assign + resolve + upvote
+│       │       ├── feed.py         ← GET /feed/resolved
+│       │       ├── analytics.py    ← GET /analytics/summary, /heatmap
+│       │       ├── notifications.py← GET/PATCH /notifications
+│       │       └── departments.py  ← GET/POST/DELETE /departments
+│       │
+│       ├── websockets/
+│       │   ├── __init__.py
+│       │   └── manager.py       ← Per-user + broadcast WebSocket manager
+│       │
+│       └── workers/
+│           ├── __init__.py
+│           ├── worker.py        ← Celery app config
+│           └── tasks.py         ← send_notification, process_image, analytics cache
+│
+├── frontend/
+│   │
+│   ├── landing/                 ← Next.js 14  (port 3000)
+│   │   ├── package.json
+│   │   ├── next.config.js
+│   │   ├── tailwind.config.ts
+│   │   ├── app/
+│   │   │   ├── layout.tsx
+│   │   │   ├── globals.css
+│   │   │   └── page.tsx         ← assembles all sections
+│   │   └── components/
+│   │       ├── Navbar.tsx        ← glassmorphism, scroll detection
+│   │       ├── Hero.tsx          ← Three.js sphere + Framer Motion
+│   │       ├── Problem.tsx       ← 4 problem cards
+│   │       ├── Solution.tsx      ← 3 role cards (student/faculty/admin)
+│   │       ├── Workflow.tsx      ← 6-step complaint flow
+│   │       ├── FeaturesGrid.tsx  ← 12 feature tiles
+│   │       ├── ImpactMetrics.tsx ← CountUp animated stats
+│   │       └── CTA.tsx           ← CTA + Footer
+│   │
+│   ├── admin/                   ← Next.js 14  (port 3001)
+│   │   ├── package.json
+│   │   ├── next.config.js
+│   │   ├── tailwind.config.ts
+│   │   ├── app/
+│   │   │   ├── layout.tsx
+│   │   │   ├── globals.css
+│   │   │   └── dashboard/
+│   │   │       ├── page.tsx          ← overview: stat cards + 3 charts
+│   │   │       ├── complaints/
+│   │   │       │   └── page.tsx
+│   │   │       ├── users/
+│   │   │       │   └── page.tsx
+│   │   │       ├── departments/
+│   │   │       │   └── page.tsx
+│   │   │       ├── heatmap/
+│   │   │       │   └── page.tsx      ← interactive campus heatmap
+│   │   │       └── analytics/
+│   │   │           └── page.tsx
+│   │   └── components/
+│   │       ├── AdminSidebar.tsx      ← collapsible sidebar
+│   │       └── charts/
+│   │           └── AnalyticsCharts.tsx  ← Recharts area/bar/pie
+│   │
+│   └── faculty/                 ← Next.js 14  (port 3002)
+│       ├── package.json
+│       ├── next.config.js
+│       ├── tailwind.config.ts
+│       ├── app/
+│       │   ├── layout.tsx
+│       │   ├── globals.css
+│       │   └── dashboard/
+│       │       └── page.tsx     ← complaints list, verify, resolve modal
+│       └── components/          ← (extend as needed)
+│
+└── mobile/                      ← Expo React Native
+    ├── App.tsx                  ← entry point
+    ├── app.json                 ← Expo config
+    ├── package.json
+    └── src/
+        ├── navigation/
+        │   └── AppNavigator.tsx ← Bottom tab navigator (5 tabs)
+        ├── screens/
+        │   ├── HomeScreen.tsx             ← greeting, stats, recent complaints
+        │   ├── SubmitComplaintScreen.tsx  ← camera picker + form + upload
+        │   ├── FeedScreen.tsx             ← pull-to-refresh resolution feed
+        │   ├── NotificationsScreen.tsx    ← (placeholder)
+        │   └── ProfileScreen.tsx          ← (placeholder)
+        └── services/
+            └── api.ts           ← axios + JWT interceptor + WebSocket factory
+
+
+═══════════════════════════════════════════════════════
+API ROUTES  (all prefixed with /api/v1)
+═══════════════════════════════════════════════════════
+
+AUTH
+  POST   /auth/register
+  POST   /auth/login
+  POST   /auth/refresh
+
+USERS
+  GET    /users/me
+  PATCH  /users/me
+  GET    /users                  (admin only)
+  PATCH  /users/{id}/activate    (admin)
+  PATCH  /users/{id}/deactivate  (admin)
+
+COMPLAINTS
+  GET    /complaints             (filtered by role)
+  POST   /complaints             (student: title+desc+category+location+image)
+  GET    /complaints/{id}
+  PATCH  /complaints/{id}/verify (faculty/admin)
+  PATCH  /complaints/{id}/assign (admin: assigns department)
+  POST   /complaints/{id}/resolve(faculty/admin: after_image + message)
+  POST   /complaints/{id}/upvote (student)
+
+FEED
+  GET    /feed/resolved
+
+ANALYTICS
+  GET    /analytics/summary      (admin)
+  GET    /analytics/heatmap      (admin)
+  GET    /analytics/departments  (admin/faculty)
+
+NOTIFICATIONS
+  GET    /notifications
+  PATCH  /notifications/{id}/read
+  PATCH  /notifications/read-all
+  GET    /notifications/unread-count
+
+DEPARTMENTS
+  GET    /departments
+  POST   /departments            (admin)
+  DELETE /departments/{id}       (admin)
+
+WEBSOCKETS
+  WS     /ws/{user_id}          ← authenticated real-time events
+  WS     /ws                    ← public broadcast
+
+STATIC FILES
+  GET    /uploads/...           ← served from uploads/ directory
+
+
+═══════════════════════════════════════════════════════
+COMPLAINT STATUS FLOW
+═══════════════════════════════════════════════════════
+
+  submitted → under_review → in_progress → resolved → closed
+    (student)   (faculty verify) (admin assign) (dept resolve)
+
+
+═══════════════════════════════════════════════════════
+USER ROLES & PERMISSIONS
+═══════════════════════════════════════════════════════
+
+  student   → submit, upvote, track own complaints, view feed
+  faculty   → verify, assign, resolve (department scope)
+  admin     → everything + analytics + heatmap + user management
+
+
+═══════════════════════════════════════════════════════
+LOCAL SETUP COMMANDS
+═══════════════════════════════════════════════════════
+
+# 1. Backend
+cd backend
+python -m venv .venv
+.venv\Scripts\activate         (Windows)
+pip install -r requirements.txt
+copy ..\.env.example .env      # edit DATABASE_URL
+alembic upgrade head
+uvicorn main:app --reload --port 8000
+# → http://localhost:8000/docs
+
+# 2. Landing page
+cd frontend\landing
+npm install && npm run dev      # → http://localhost:3000
+
+# 3. Admin dashboard
+cd frontend\admin
+npm install && npm run dev      # → http://localhost:3001
+
+# 4. Faculty dashboard
+cd frontend\faculty
+npm install && npm run dev      # → http://localhost:3002
+
+# 5. Mobile app
+cd mobile
+npm install && npx expo start   # scan QR in Expo Go
+
+# 6. Docker (everything at once)
+copy .env.example .env
+docker-compose up --build

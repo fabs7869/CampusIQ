@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+*.exe
+*.bin
+
+# Database
+*.sqlite3
+pgadmin_data/
+postgres_data/
+redis_data/
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep

@@ -1,0 +1,121 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: campusiq_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-campusiq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusiq_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-campusiq_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusiq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: campusiq_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campusiq_backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campusiq_celery
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    depends_on:
+      - redis
+      - postgres
+    command: celery -A app.workers.worker worker --loglevel=info
+
+  landing:
+    build:
+      context: ./frontend/landing
+      dockerfile: Dockerfile
+    container_name: campusiq_landing
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+
+  admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    container_name: campusiq_admin
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
+
+  faculty:
+    build:
+      context: ./frontend/faculty
+      dockerfile: Dockerfile
+    container_name: campusiq_faculty
+    ports:
+      - "3002:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: campusiq_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@campusiq.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

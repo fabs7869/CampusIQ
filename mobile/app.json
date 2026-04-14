@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "CampusIQ",
+    "slug": "campusiq-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0a0a1a"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a1a"
+      },
+      "package": "com.campusiq.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.campusiq.mobile",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CampusIQ needs access to your photos to attach image proof to complaints.",
+          "cameraPermission": "CampusIQ needs access to your camera to take photos for complaint submissions."
+        }
+      ]
+    ]
+  }
+}

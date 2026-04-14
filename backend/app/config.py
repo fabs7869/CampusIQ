@@ -51,6 +51,12 @@ class Settings(BaseSettings):
         # If REDIS_URL is provided in environment, use it for Celery as well
         if "REDIS_URL" in os.environ or values.get("REDIS_URL"):
             url = values.get("REDIS_URL") or os.environ.get("REDIS_URL")
+            
+            # Upstash (rediss://) requires ssl_cert_reqs parameter for Celery
+            if url.startswith("rediss://") and "ssl_cert_reqs" not in url:
+                separator = "&" if "?" in url else "?"
+                url = f"{url}{separator}ssl_cert_reqs=none"
+                
             self.CELERY_BROKER_URL = url
             self.CELERY_RESULT_BACKEND = url
 
